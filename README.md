@@ -1,3 +1,14 @@
+# Why this fork?
+Now is possible to enable/disable mirroring and skip the "Select screen" modal window.
+
+To enable mirroring
+
+    cordova.exec(function(){alert("mirroring OK")}, function(){alert("mirroring KO")}, "Presentation", "setSecondScreen", ["activate"]);
+
+To disable mirroring
+
+    cordova.exec(function(){alert("presentation OK")}, function(){alert("presentation KO")}, "Presentation", "setSecondScreen", ["deactivate"]);
+
 
 # de.fhg.fokus.famium.presentation
 

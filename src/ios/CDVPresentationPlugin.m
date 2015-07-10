@@ -103,7 +103,7 @@
     NSMutableDictionary* returnInfo = [NSMutableDictionary dictionaryWithCapacity:1];
     [returnInfo setObject:newSession.sid forKey:@"id"];
     [self returnInfo:command.callbackId andReturn:returnInfo andKeepCallback:true];
-
+    
     // Display an alert msg to user if no external screen is available now
     if (self.screensAvailable <= 0) {
         if( self.alert != nil) {
@@ -125,13 +125,16 @@
         // The last caller of requestSession will get the picker result
         // TODO(mla): API spec needs clarification on this
         self.devicePickerViewController.sid = newSession.sid;
-
-        if (!self.pickerShowing) {
-            self.pickerShowing = YES;
-            //[self.viewController.navigationController presentViewController:self.devicePickerViewController animated:YES completion:nil];
-
-            [self.viewController presentViewController:self.navi animated:YES completion:nil];
-        }
+        
+        [self.devicePickerViewController viewDidLoad];
+        
+//        if (!self.pickerShowing) {
+//            self.pickerShowing = YES;
+//            //[self.viewController.navigationController presentViewController:self.devicePickerViewController animated:YES completion:nil];
+//
+//            //[self.viewController presentViewController:self.navi animated:YES completion:nil];
+//            
+//        }
     }
 }
 
@@ -179,6 +182,8 @@
     [center addObserver:self selector:@selector(handleScreenDidDisconnectNotification:)
                    name:UIScreenDidDisconnectNotification object:nil];
 
+    //MODIFIED MARCO GIACOMINI
+    
     // Add all already connected displays
     for (UIScreen *newScreen in [UIScreen screens]) {
         if ([newScreen isEqual:[[UIScreen screens] objectAtIndex:0]] ) {
@@ -188,6 +193,17 @@
     }
 
     // TODO(mla): potentialy other discovery mechanisms here ...
+}
+
+- (void)addSecondScreen:(CDVInvokedUrlCommand*)command{
+
+    for (UIScreen *newScreen in [UIScreen screens]) {
+        if ([newScreen isEqual:[[UIScreen screens] objectAtIndex:0]] ) {
+            continue;
+        }
+        [self addConnectedScreen:newScreen];
+    }
+
 }
 
 - (void)removeExternalScreenNotificationHandlers
@@ -212,6 +228,9 @@
     // Show the placeholder display
     UIWindow *secondWindow = [[UIWindow alloc] initWithFrame:newScreen.bounds];
     secondWindow.screen = newScreen;
+
+#pragma mark hideSecondScreen default (Marco Giacomini)
+    
     secondWindow.hidden = NO;
 
     WebscreenViewController * wvc = [[WebscreenViewController alloc] initWithSid:screenId];
@@ -238,6 +257,7 @@
 
 - (void)handleScreenDidConnectNotification:(NSNotification*)aNotification
 {
+    
     NSLog(@"Called handleScreenDidConnectNotification");
     UIScreen *newScreen = [aNotification object];
 
@@ -278,9 +298,16 @@
     NSLog(@"Called picker");
     [self.viewController dismissViewControllerAnimated:YES completion:nil];
     self.pickerShowing = NO;
-
+    
+    
+    //[secondWindow.rootViewController dismissViewControllerAnimated:YES completion:^{
+    //    [secondWindow.rootViewController presentViewController:defaultwvc animated:YES completion:nil];
+    //}];
+   
+    
     // Store refs to screen and webscreen
     PresentationSession * ps = [self.sessions objectForKey:sid];
+    
     if (ps){
         UIWindow *secondWindow=defaultwvc.window;
         if (secondWindow) {
@@ -294,6 +321,10 @@
 
             secondWindow.rootViewController = newwvc;
 
+            
+            
+            
+            
 //            // Hide the default display
 //            [secondWindow.rootViewController dismissViewControllerAnimated:YES completion:^{
 //
@@ -305,6 +336,55 @@
         }
     }
 }
+
+#pragma mark modified Marco Giacomini
+
+- (void) setSecondScreen:(CDVInvokedUrlCommand*)command{
+    
+    CDVPluginResult* pluginResult = nil;
+    
+    NSString* cmd = [command.arguments objectAtIndex:0];
+    
+    NSLog(@"NUMERO DI SESSIONI:%i",(int)[self.sessions count]);
+    
+    if ([cmd isEqualToString:@"activate"]) {
+        
+        for (WebscreenViewController *wvc in self.screens) {
+            
+            [wvc.window setHidden:YES];
+            
+        }
+        
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        
+    }else if([cmd isEqualToString:@"deactivate"]){
+        
+        if ([self.sessions count] < 1) {
+            
+//            CDVInvokedUrlCommand *cmdToRequestSession = [[CDVInvokedUrlCommand alloc] initWithArguments:@[@"secondscreen.html"]
+//                                                                                             callbackId:@"success"
+//                                                                                             className:@"suc" methodName:@"pippo"];
+//            [self requestSession:cmdToRequestSession];
+            
+        }
+        
+        for (WebscreenViewController *wvc in self.screens) {
+            
+            [wvc.window setHidden:NO];
+            
+        }
+        
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        
+    }else{
+        
+        NSLog(@"Errore command value");
+       pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 
 - (void) webscreenReady:(NSString *)sid
 {
@@ -374,8 +454,17 @@
 - (void)presentationSessionClose:(CDVInvokedUrlCommand *)command
 {
     NSLog(@"Called presentationSessionClose");
+    
     NSString* sid = [command.arguments objectAtIndex:0];
+    
+    NSLog(@"COUNT SCREEN BEFORE: %i",(int)[self.screens count]);
+    
+    //[self.screens removeAllObjects];
+    
+    NSLog(@"COUNT SCREEN: %i",(int)[self.screens count]);
+    
     [self closeSession:sid];
+    
 }
 
 - (void)closeRequested:(NSString *)sid
@@ -417,6 +506,7 @@
 
 - (void)closeSession:(NSString *)sid
 {
+    
     WebscreenViewController * wvc = [self.webscreens objectForKey:sid];
     PresentationSession * ps = [self.sessions objectForKey:sid];
 
@@ -445,6 +535,31 @@
         [wvc close];
         [self.webscreens removeObjectForKey:sid];
         // TODO(mla): check for better cleanup of the webscreen
+    }
+}
+
+#pragma mark myPickerInstanceCallBack
+
+-(void)setNewSessionFromPickerNorShowed:(WebscreenViewController *)defaultwvc forSession:(NSString *)sid
+{
+    NSLog(@"Uso la nuova sessione dal picker non mostrato");
+    
+    PresentationSession * ps = [self.sessions objectForKey:sid];
+    
+    if (ps){
+        UIWindow *secondWindow=defaultwvc.window;
+        if (secondWindow) {
+    
+            defaultwvc.sid = sid;
+            
+            WebscreenViewController * newwvc = [[WebscreenViewController alloc] initWithSid:sid];
+            newwvc.delegate = self;
+            newwvc.session = ps;
+            [self.webscreens setObject:newwvc forKey:sid];
+            
+            secondWindow.rootViewController = newwvc;
+            
+        }
     }
 }
 

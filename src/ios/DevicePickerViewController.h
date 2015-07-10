@@ -39,6 +39,7 @@
 @protocol DevicePickerDelegate <NSObject>
 - (void)dismissPickerRequested:(DevicePickerViewController *)controller withSession:(NSString *)sessionId;
 - (void)picker:(DevicePickerViewController *)controller didSelectScreen:(WebscreenViewController *)screen forSession:(NSString *)sid;
+- (void)setNewSessionFromPickerNorShowed:(WebscreenViewController *)defaultwvc forSession:(NSString *)sid;
 - (void)loadedPicker;
 @end
 

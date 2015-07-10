@@ -32,6 +32,11 @@
 {
     [self.screens addObject:screen];
     [self.table reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationAutomatic];
+    
+    
+    WebscreenViewController *wvc = [self.screens lastObject];
+    
+    [self.pickerDelegate setNewSessionFromPickerNorShowed:wvc forSession:self.sid];
 }
 
 -(void)removeScreen:(WebscreenViewController *)screen
@@ -60,6 +65,7 @@
     [self.navigationItem setRightBarButtonItem:doneButton];
 
     [self.pickerDelegate loadedPicker];
+    
 }
 
 - (void)didReceiveMemoryWarning

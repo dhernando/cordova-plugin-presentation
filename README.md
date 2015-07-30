@@ -38,4 +38,4 @@ limitations under the License.
 
 ### Contact
 
-[Fraunhofer FOKUS - Competence Center FAME // Future Applications and Media](http://www.fokus.fraunhofer.de/en/fame/index.html)
+[Fraunhofer FOKUS - Competence Center FAME // Future Applications and Media](http://www.fokus.fraunhofer.de/fame)

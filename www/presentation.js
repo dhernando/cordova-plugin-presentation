@@ -54,16 +54,21 @@ var exec = function(){
   TODO(mla): EventTarget implementation.
 
  */
-function NavigatorPresentation() {
-    // In case of mirroring, display the following placeholder page
-    var defaultDisplay = makeAbs("presentation/display.html");
-    var c=document.getElementsByTagName("script");
-      for(var i=0; i<c.length; i++){
-      if (c[i] && c[i].src && c[i].src.indexOf("/cordova.js") != -1){
-        defaultDisplay= c[i].src.replace("/cordova.js","/presentation/display.html");
-      }
-    }
-    exec(/*successCallback*/Function, /*errorCallback*/Function, "Presentation", "setDefaultDisplay", [ defaultDisplay ]);}
+function NavigatorPresentation() {}
+
+Object.defineProperty(NavigatorPresentation.prototype,"enableMirroring",{
+  get: function () {
+    exec(function(){}, function(){}, "Presentation", "enableMirroring", []);
+    var defaultDisplay = "file:///android_asset/public/second-screen/default-display/index.html";
+    exec(/*successCallback*/Function, /*errorCallback*/Function, "Presentation", "setDefaultDisplay", [ defaultDisplay ]);
+  }
+});
+
+Object.defineProperty(NavigatorPresentation.prototype,"disableMirroring",{
+  get: function () {
+    exec(function(){}, function(){}, "Presentation", "disableMirroring", []);
+  }
+});
 
 Object.defineProperty(NavigatorPresentation.prototype,"requestSession",{
 get: function () {

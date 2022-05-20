@@ -52,15 +52,12 @@ public class CDVPresentationPlugin extends CordovaPlugin implements DisplayManag
 	@Override
 	public void initialize(CordovaInterface cordova, CordovaWebView webView) {
 		activity = cordova.getActivity();
-		getDisplayManager();
 		super.initialize(cordova, webView);
 	}
 	
 	@Override
 	public void onDestroy() {
-		getDisplayManager().unregisterDisplayListener(this);
-		getPresentations().clear();
-		displayManager = null;
+		disableMirroring();
 		super.onDestroy();
 	}
 	/**
@@ -91,6 +88,12 @@ public class CDVPresentationPlugin extends CordovaPlugin implements DisplayManag
 		else if (action.equals("setDefaultDisplay")) {
 			LOG.d(LOG_TAG, "setDefaultDisplay");
 			return setDefaultDisplay(args,callbackContext);
+		} else if(action.equals("enableMirroring")) {
+			LOG.d(LOG_TAG, "enableMirroring");
+			return enableMirroring();	
+		} else if(action.equals("disableMirroring")) {
+			LOG.d(LOG_TAG, "disableMirroring");
+			return disableMirroring();	
 		}
 		return false;
 	}
@@ -294,26 +297,12 @@ public class CDVPresentationPlugin extends CordovaPlugin implements DisplayManag
 			presentations[counter] = presentation;
 			items[counter++] = presentation.getDisplay().getName();
 		}
-		builder.setTitle("Select Presentation Display").setItems(items,
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						SecondScreenPresentation presentation = presentations[which];
-						session.setPresentation(presentation);
-						getSessions().put(session.getId(), session);
-					}
-				}).setCancelable(false).setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				}).setOnCancelListener(new DialogInterface.OnCancelListener() {
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						session.setState(PresentationSession.DISCONNECTED);
-					}
-				});
-		AlertDialog dialog = builder.create();
-		dialog.show();
+
+		if(presentations.length > 0){
+			SecondScreenPresentation presentation = presentations[0];
+			session.setPresentation(presentations[0]);
+			getSessions().put(session.getId(), session);
+		}
 	};
 	
 	@Override
@@ -366,5 +355,17 @@ public class CDVPresentationPlugin extends CordovaPlugin implements DisplayManag
 		if (oldSize > 0 && newSize == 0 && callbackContext != null) {
 			sendAvailableChangeResult(callbackContext,getPresentations().size()>0);
 		}
+	}
+
+	private boolean enableMirroring(){
+		getDisplayManager();
+		return true;
+	}
+
+	private boolean disableMirroring(){
+		getDisplayManager().unregisterDisplayListener(this);
+		getPresentations().clear();
+		displayManager = null;
+		return true;
 	}
 }
